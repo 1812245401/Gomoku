@@ -33,7 +33,9 @@ Gomoku/
 ├── build.gradle
 ├── gradle.properties
 ├── settings.gradle
-├── screenshots/     # 应用截图
+├── gradlew / gradlew.bat   # Gradle Wrapper
+├── gradle/wrapper/         # Wrapper 配置与 jar
+├── screenshots/            # 应用截图
 ├── README.md
 └── CHANGELOG.md
 ```
