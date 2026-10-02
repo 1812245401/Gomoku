@@ -52,7 +52,10 @@ Gomoku/
 
 ## 许可
 
-本项目仅供学习交流使用。
+本项目基于 [MIT License](LICENSE) 开源。
+
+- 开源协议：[MIT](LICENSE)
+- 隐私政策：[PRIVACY.md](PRIVACY.md)（本应用不收集任何个人数据）
 
 ## 作者
 
