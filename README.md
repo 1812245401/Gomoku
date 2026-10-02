@@ -1,6 +1,16 @@
-# Gomoku
+# Gomoku · 五子棋
 
-Android 五子棋（连珠）分析与打谱应用。基于 AIDE 手机端开发。
+Android 五子棋（连珠）分析与打谱应用。基于 AIDE 手机端开发，AI 引擎全本地运行，无需联网。
+
+## 截图
+
+| KataGo 局面分析 | Rapfi 最佳点 | 保存棋谱 |
+|:---:|:---:|:---:|
+| ![KataGo 分析](screenshots/01_katago_analysis.jpg) | ![Rapfi 最佳点](screenshots/03_rapfi_best_move.jpg) | ![保存棋谱](screenshots/02_save_record.jpg) |
+
+| 导入棋谱 | 横屏棋盘 | |
+|:---:|:---:|:---:|
+| ![导入棋谱](screenshots/04_import_sgf.jpg) | ![横屏](screenshots/05_landscape_board.jpg) | |
 
 ## 功能
 
@@ -27,6 +37,7 @@ app/src/main/assets/    引擎配置与模型文件
   model210901.bin              默认模型
   *.bin.lz4                    压缩权重
   b24.int8.onnx / libonnxruntime.so / pbrain-rapfi / katago  引擎二进制
+screenshots/            应用截图
 ```
 
 ## 构建
@@ -43,6 +54,15 @@ Gradle + Android Gradle Plugin 7.0.2，compileSdk 33，minSdk 19。
 
 当前版本 **v1.1.0**（versionCode 2）。详见 [CHANGELOG.md](CHANGELOG.md)。
 
+## 安装
+
+到 [Releases](https://github.com/1812245401/Gomoku/releases) 下载最新 APK 直接安装。
+
 ## 许可
 
 仅供学习交流。
+
+---
+
+### 作者 / Author
+**w_wall** · QQ 1812245401 · 1812245401@qq.com
