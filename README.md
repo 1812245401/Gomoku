@@ -6,11 +6,11 @@ Android 五子棋（连珠）分析与打谱应用。基于 AIDE 手机端开发
 
 | KataGo 局面分析 | Rapfi 最佳点 | 保存棋谱 |
 |:---:|:---:|:---:|
-| ![KataGo 分析](screenshots/01_katago_analysis.jpg) | ![Rapfi 最佳点](screenshots/03_rapfi_best_move.jpg) | ![保存棋谱](screenshots/02_save_record.jpg) |
+| ![KataGo 分析](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/01_katago_analysis.jpg) | ![Rapfi 最佳点](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/03_rapfi_best_move.jpg) | ![保存棋谱](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/02_save_record.jpg) |
 
 | 导入棋谱 | 横屏棋盘 | |
 |:---:|:---:|:---:|
-| ![导入棋谱](screenshots/04_import_sgf.jpg) | ![横屏](screenshots/05_landscape_board.jpg) | |
+| ![导入棋谱](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/04_import_sgf.jpg) | ![横屏](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/05_landscape_board.jpg) | |
 
 ## 功能
 
