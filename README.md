@@ -6,11 +6,11 @@ Android 五子棋（连珠）分析与打谱应用。AI 引擎全本地运行，
 
 | KataGo 局面分析 | Rapfi 最佳点 | 导入棋谱 |
 |:---:|:---:|:---:|
-| ![KataGo 局面分析](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/01_katago_analysis.jpg) | ![Rapfi 最佳点](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/02_rapfi_best_move.jpg) | ![导入棋谱](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/03_import_sgf.jpg) |
+| ![KataGo 局面分析](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/01_katago.jpg) | ![Rapfi 最佳点](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/02_rapfi.jpg) | ![导入棋谱](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/03_import_sgf.jpg) |
 
 | 保存棋谱 | 横屏棋盘 | |
 |:---:|:---:|:---:|
-| ![保存棋谱](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/04_save_record.jpg) | ![横屏棋盘](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/05_landscape_board.jpg) | |
+| ![保存棋谱](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/04_save_record.jpg) | ![横屏棋盘](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/05_landscape.jpg) | |
 
 ## 功能
 
