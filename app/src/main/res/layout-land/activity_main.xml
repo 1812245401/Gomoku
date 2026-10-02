@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="#F6F5F2"
+    android:fitsSystemWindows="true">
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1.62"
+        android:padding="8dp">
+
+        <com.gomoku.BoardView
+            android:id="@+id/boardView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.78"
+        android:orientation="vertical"
+        android:background="#FAFAF8">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="4dp">
+
+            <TextView
+                android:id="@+id/titleGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:text="Gomoku · 五子棋"
+                android:textColor="#171717"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnMenu"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="⋮"
+                android:textSize="20sp"
+                android:textColor="#3D3D3D"
+                android:background="@drawable/bg_menu"
+                android:minHeight="0dp"
+                android:minWidth="0dp"
+                android:padding="0dp"
+                android:stateListAnimator="@null" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
+
+            <TextView
+                android:id="@+id/tvTurnStatus"
+                android:layout_width="116dp"
+                android:layout_height="30dp"
+                android:gravity="center"
+                android:text="当前执子：黑方"
+                android:textColor="#262626"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_turn" />
+
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:gravity="center_vertical"
+                android:singleLine="true"
+                android:text="准备中..."
+                android:textColor="#777570"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:scrollbars="none"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <Button
+                    android:id="@+id/btnPass"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:text="停一手"
+                    android:textSize="11sp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:stateListAnimator="@null" />
+
+                <Button
+                    android:id="@+id/btnClear"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="5dp"
+                    android:text="清空棋盘"
+                    android:textSize="11sp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:stateListAnimator="@null" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="5dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnPrev"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="2dp"
+                        android:text="‹ 上一手"
+                        android:textSize="10sp"
+                        android:background="@drawable/bg_button_secondary"
+                        android:minHeight="0dp"
+                        android:minWidth="0dp"
+                        android:padding="0dp"
+                        android:stateListAnimator="@null" />
+
+                    <Button
+                        android:id="@+id/btnNext"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginStart="2dp"
+                        android:text="下一手 ›"
+                        android:textSize="10sp"
+                        android:background="@drawable/bg_button_secondary"
+                        android:minHeight="0dp"
+                        android:minWidth="0dp"
+                        android:padding="0dp"
+                        android:stateListAnimator="@null" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnShowNumbers"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="5dp"
+                    android:text="编号：关"
+                    android:textSize="10sp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:stateListAnimator="@null" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="分析引擎"
+                    android:textColor="#8A8883"
+                    android:textSize="9sp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="3dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:orientation="horizontal"
+                    android:background="@drawable/bg_segment">
+
+                    <Button
+                        android:id="@+id/btnEngineKataGo"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="KataGo"
+                        android:textSize="10sp"
+                        android:textColor="@color/control_text"
+                        android:background="@drawable/bg_segment_left"
+                        android:minHeight="0dp"
+                        android:minWidth="0dp"
+                        android:padding="0dp"
+                        android:stateListAnimator="@null" />
+
+                    <Button
+                        android:id="@+id/btnEngineRapfi"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Rapfi"
+                        android:textSize="10sp"
+                        android:textColor="@color/control_text"
+                        android:background="@drawable/bg_segment_right"
+                        android:minHeight="0dp"
+                        android:minWidth="0dp"
+                        android:padding="0dp"
+                        android:stateListAnimator="@null" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="棋规"
+                    android:textColor="#8A8883"
+                    android:textSize="9sp"
+                    android:layout_marginTop="7dp"
+                    android:layout_marginBottom="3dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:orientation="horizontal"
+                    android:background="@drawable/bg_segment">
+
+                    <Button
+                        android:id="@+id/btnRenju"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="有禁手"
+                        android:textSize="10sp"
+                        android:textColor="@color/control_text"
+                        android:background="@drawable/bg_segment_left"
+                        android:minHeight="0dp"
+                        android:minWidth="0dp"
+                        android:padding="0dp"
+                        android:stateListAnimator="@null" />
+
+                    <Button
+                        android:id="@+id/btnFreestyle"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="无禁手 · 六胜"
+                        android:textSize="10sp"
+                        android:textColor="@color/control_text"
+                        android:background="@drawable/bg_segment_right"
+                        android:minHeight="0dp"
+                        android:minWidth="0dp"
+                        android:padding="0dp"
+                        android:stateListAnimator="@null" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnStartAnalyze"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="8dp"
+                    android:text="开始分析"
+                    android:textSize="11sp"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/bg_button_primary"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:stateListAnimator="@null" />
+
+                <Button
+                    android:id="@+id/btnStopAnalyze"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="5dp"
+                    android:text="停止分析"
+                    android:textSize="11sp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:stateListAnimator="@null" />
+
+                <Button
+                    android:id="@+id/btnSave"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="5dp"
+                    android:text="保存棋谱"
+                    android:textSize="11sp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:stateListAnimator="@null" />
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+</LinearLayout>
