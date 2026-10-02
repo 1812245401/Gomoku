@@ -6,7 +6,7 @@ Android 五子棋（连珠）分析与打谱应用。AI 引擎全本地运行，
 
 | KataGo 局面分析 | Rapfi 最佳点 | 导入棋谱 |
 |:---:|:---:|:---:|
-| ![KataGo 局面分析](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/01_katago.jpg) | ![Rapfi 最佳点](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/02_rapfi.jpg) | ![导入棋谱](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/03_import_sgf.jpg) |
+| ![KataGo 局面分析](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/01_katago.jpg) | ![Rapfi 最佳点](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/02_rapfi.jpg) | ![导入棋谱](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/03_import.jpg) |
 
 | 保存棋谱 | 横屏棋盘 | |
 |:---:|:---:|:---:|
