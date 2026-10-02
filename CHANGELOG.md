@@ -25,7 +25,6 @@
 - 双 AI 引擎（KataGo + Rapfi），全本地推理，无需联网。
 - 标准 SGF (FF[4]) 棋谱读写。
 - 对局自动保存与记录管理。
-- 拍照识别棋盘。
 
 [1.1.0]: https://github.com/1812245401/Gomoku/releases/tag/v1.1.0
 [1.0.0]: https://github.com/1812245401/Gomoku/releases/tag/v1.0.0
