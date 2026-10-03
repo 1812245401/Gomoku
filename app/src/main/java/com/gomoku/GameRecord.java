@@ -30,7 +30,14 @@ public class GameRecord {
         StringBuilder sb = new StringBuilder();
         for (int[] m : history) {
             if (sb.length() > 0) sb.append(";");
-            sb.append(m[0]).append(",").append(m[1]).append(",").append(m[2]);
+            /*
+             * 四列：col,row,player,number
+             * number 是「棋子上手序编号」：
+             *   > 0 = 有手序号；= 0 = 该子不带手序号（不绘制、导出也不带）。
+             * 旧的三列数据仍可被 deserialize 读入（第 4 列按 0 处理）。
+             */
+            sb.append(m[0]).append(",").append(m[1]).append(",").append(m[2])
+                    .append(",").append(m.length >= 4 ? m[3] : 0);
         }
         return sb.toString();
     }
@@ -41,11 +48,12 @@ public class GameRecord {
         String[] parts = data.split(";");
         for (String p : parts) {
             String[] t = p.split(",");
-            if (t.length == 3) {
+            if (t.length >= 3) {
                 list.add(new int[]{
                         Integer.parseInt(t[0]),
                         Integer.parseInt(t[1]),
-                        Integer.parseInt(t[2])
+                        Integer.parseInt(t[2]),
+                        t.length >= 4 ? Integer.parseInt(t[3]) : 0
                 });
             }
         }

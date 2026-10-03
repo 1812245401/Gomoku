@@ -35,11 +35,10 @@ public final class SgfIO {
      * 结构形如：
      * <pre>
      * (;GM[1]FF[4]...KM[7.5]
-     *   (;B[kk];W[mj];...)
-     * )
+     * ;B[kk]
+     * ;W[mj]
+     * ...)
      * </pre>
-     * 根节点承载全部属性，主分支（着法序列）用一层括号显式包裹，
-     * 使其成为显式的棋谱树，而非平铺的一串节点。
      *
      * @param moves      落子列表（int[]{col,row,color}），可为空但非 null
      * @param name       棋谱名 -> GN
@@ -62,7 +61,7 @@ public final class SgfIO {
          * 兼容按行解析的简易解析器；RU 值使用小写（renju/freestyle），
          * 大小写敏感的打谱软件据此识别规则。 */
         sb.append("(\n  ");
-        sb.append(";GM[1]FF[4]CA[UTF-8]AP[Gomoku:1.0]");
+        sb.append(";GM[1]FF[4]CA[UTF-8]AP[Gomoku:1.2]");
         sb.append("SZ[").append(BOARD_SIZE).append("]");
 
         sb.append("RU[").append(renju ? "renju" : "freestyle").append("]");
@@ -90,28 +89,26 @@ public final class SgfIO {
 
         sb.append("KM[").append(DEFAULT_KOMI).append("]");
 
-        /* 着法直接续写在根节点之后（标准单线棋谱，无变化图分支） */
-        if (moves != null) {
-            for (int[] m : moves) {
-                if (m == null || m.length < 3) continue;
+        /* 着法节点 */
+        for (int[] m : moves) {
+            if (m == null || m.length < 3) continue;
 
-                int col = m[0];
-                int row = m[1];
-                int color = m[2];
+            int col = m[0];
+            int row = m[1];
+            int color = m[2];
 
-                sb.append("\n  ;")
-                        .append(color == COLOR_WHITE ? 'W' : 'B');
+            sb.append("\n  ;")
+                    .append(color == COLOR_WHITE ? 'W' : 'B');
 
-                if (col < 0 || row < 0
-                        || col >= BOARD_SIZE || row >= BOARD_SIZE) {
-                    /* pass：SGF 中写作空值 ;B[] / ;W[] */
-                    sb.append("[]");
-                } else {
-                    sb.append('[')
-                            .append((char) ('a' + col))
-                            .append((char) ('a' + row))
-                            .append(']');
-                }
+            if (col < 0 || row < 0
+                    || col >= BOARD_SIZE || row >= BOARD_SIZE) {
+                /* pass：SGF 中写作空值 ;B[] / ;W[] */
+                sb.append("[]");
+            } else {
+                sb.append('[')
+                        .append((char) ('a' + col))
+                        .append((char) ('a' + row))
+                        .append(']');
             }
         }
 

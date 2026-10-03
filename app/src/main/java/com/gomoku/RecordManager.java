@@ -21,7 +21,7 @@ public class RecordManager {
     }
 
     public void saveAutoGame(List<int[]> history, int currentIndex, boolean showNumbers,
-                             int engine, boolean renju) {
+                             int engine, boolean renju, boolean recognized) {
         try {
             JSONObject o = new JSONObject();
             o.put("movesData", GameRecord.serialize(history));
@@ -29,6 +29,9 @@ public class RecordManager {
             o.put("showNumbers", showNumbers);
             o.put("engine", engine);
             o.put("renju", renju);
+            /* 拍照识谱标记：识别棋谱禁止保存；标记随自动存档一并留存，
+             * 保证旋转屏幕 / 重启后仍保持“禁止保存”状态。 */
+            o.put("recognized", recognized);
             o.put("timestamp", System.currentTimeMillis());
             sp.edit().putString(AUTO_KEY, o.toString()).commit();
         } catch (Exception ignored) {}

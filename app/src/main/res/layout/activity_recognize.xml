@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  图片识谱界面布局。
+  本布局不含任何识别逻辑：识别全部在 assets/recognize/recognize.js（半步五子棋打谱 1.1.9 原样切片）里完成。
+   - WebView 只是识别模块的运行宿主；
+   - RoiCropView 是纯 UI 框选控件；
+   - board_preview 是「预览棋盘」，复刻主界面的 BoardView：识别结果先落在这里，
+      用户可以在上面删子 / 补子，确认无误后再「导入到棋盘」。
+  这些控件都只是宿主与纯 UI，不含任何识别算法。
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 主界面（可滚动：预览棋盘需要占较高空间） -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tv_recog_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="正在加载半步识别模块…"
+                android:textSize="14sp" />
+
+            <!-- 固定 15 路五子棋，不再提供路数选择；此处只显示识别置信度 -->
+            <TextView
+                android:id="@+id/tv_recog_conf"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="识别模块运行窗口（调试日志）："
+                android:textSize="12sp" />
+
+            <WebView
+                android:id="@+id/web_recognize"
+                android:layout_width="match_parent"
+                android:layout_height="110dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_recog_pick"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="选择照片" />
+
+                <Button
+                    android:id="@+id/btn_recog_roi"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:enabled="false"
+                    android:text="重新框选" />
+
+                <Button
+                    android:id="@+id/btn_recog_run"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="开始识别" />
+            </LinearLayout>
+
+            <!-- 预览棋盘：识别结果先落在这里，可删子 / 补子 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="识别预览棋盘（可删子 / 补子，确认后再导入）："
+                android:textSize="12sp" />
+
+            <com.gomoku.BoardView
+                android:id="@+id/board_preview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <!-- 编辑模式：补子 / 删子 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_preview_place"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="补子" />
+
+                <Button
+                    android:id="@+id/btn_preview_delete"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="删子" />
+            </LinearLayout>
+
+            <!-- 落子色 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_preview_color"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="落子色:黑" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_recog_import"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="导入到棋盘" />
+
+                <Button
+                    android:id="@+id/btn_recog_cancel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="取消" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- 手动框选棋盘区域的遮罩层：默认隐藏，选图后自动弹出 -->
+    <LinearLayout
+        android:id="@+id/roi_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#E6000000"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tv_roi_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="请拖出一个矩形把棋盘（含棋子）完整框住；框好后可拖动四角手柄微调，再点「确定」"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <com.gomoku.RoiCropView
+            android:id="@+id/view_roi_crop"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_roi_reset"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="清除框选" />
+
+            <Button
+                android:id="@+id/btn_roi_confirm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="确定" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

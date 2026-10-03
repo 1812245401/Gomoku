@@ -20,6 +20,12 @@ public class BoardView extends View {
 
     public static final int BOARD_SIZE = 15;
 
+    /*
+     * 预览棋盘（识谱预览用）的编辑模式。纯 UI 状态，不涉及任何识别逻辑。
+     */
+    public static final int EDIT_NONE = 0;   /* 点空点补子（对局即原落子行为） */
+    public static final int EDIT_DELETE = 1; /* 点已有棋子 → 删子 */
+
     private float cellSize;
     private float padding;
 
@@ -43,10 +49,20 @@ public class BoardView extends View {
     private final List<int[]> moveHistory = new ArrayList<>();
 
     private int currentIndex = -1;
-
     private boolean isBlackTurn = true;
     private boolean analyzing = false;
     private boolean showNumbers = false;
+
+    /*
+     * 预览/编辑（识谱预览棋盘专用）：纯 UI 状态，不涉及任何识别逻辑。
+     *   previewMode  = true 时进入识谱预览编辑：补子不带手序号、不自动换手。
+     *   previewColor = 「补子」落下的颜色（1=黑 2=白）。
+     *   editMode     = 点按行为：EDIT_NONE 补子 / EDIT_DELETE 删子。
+     */
+    private boolean previewMode = false;
+    private int previewColor = 1;
+    private int editMode = EDIT_NONE;
+
 
     private final float[][] analysisScore = new float[BOARD_SIZE][BOARD_SIZE];
     private final String[][] analysisText = new String[BOARD_SIZE][BOARD_SIZE];
@@ -306,7 +322,13 @@ public class BoardView extends View {
         for (int col = 0; col < BOARD_SIZE; col++) {
             for (int row = 0; row < BOARD_SIZE; row++) {
                 if (board[col][row] != 0) continue;
-                if (analysisScore[col][row] <= 0.001f) continue;
+
+                /*
+                 * 用 text 是否为 null 判断「该点有没有分析数据」。
+                 * 不能用 score <= 0.001f：score 存的是胜率(0~1)，
+                 * 胜率为 0 的合法候选点会被误判为无数据而不显示。
+                 */
+                if (analysisText[col][row] == null) continue;
 
                 float cx = xOf(col);
                 float cy = yOf(row);
@@ -375,9 +397,20 @@ public class BoardView extends View {
             moveNumberPaint.setColor(
                     m[2] == 1 ? Color.WHITE : Color.rgb(35, 35, 35));
             moveNumberPaint.setTextSize(cellSize * 0.29f);
-
+            /*
+             * 编号来源：
+             *   - 有第 4 位：画真实手序号（> 0 才画；= 0 表示该子不带手序号，跳过）。
+             *   - 没有第 4 位（极旧的 3 位历史）：沿用原逻辑画 k+1。
+             */
+            String label;
+            if (m.length >= 4) {
+                if (m[3] <= 0) continue;
+                label = String.valueOf(m[3]);
+            } else {
+                label = String.valueOf(k + 1);
+            }
             canvas.drawText(
-                    String.valueOf(k + 1),
+                    label,
                     cx,
                     cy + cellSize * 0.105f,
                     moveNumberPaint);
@@ -451,6 +484,17 @@ public class BoardView extends View {
                 || Math.abs(boardY - row) > 0.62f) {
             return true;
         }
+        /* 预览棋盘：按 editMode 分派，纯 UI 交互，不改识别逻辑 */
+        if (previewMode) {
+            if (editMode == EDIT_DELETE) {
+                deleteStoneAt(col, row);
+            } else {
+                if (board[col][row] == 0) {
+                    placeStone(col, row);
+                }
+            }
+            return true;
+        }
 
         if (currentIndex != -1) {
             int keep = getDisplayCount();
@@ -468,19 +512,30 @@ public class BoardView extends View {
         return true;
     }
 
+
     @Override
     public boolean performClick() {
         super.performClick();
         return true;
     }
-
     private void placeStone(int col, int row) {
-        int color = isBlackTurn ? 1 : 2;
+        int color;
+        int number;
+        if (previewMode) {
+            color = previewColor;
+            number = 0; /* 预览补子不带手序号 */
+        } else {
+            color = isBlackTurn ? 1 : 2;
+            number = nextManualNumber();
+        }
 
         board[col][row] = color;
-        moveHistory.add(new int[]{col, row, color});
+        moveHistory.add(new int[]{col, row, color, number});
         currentIndex = -1;
-        isBlackTurn = !isBlackTurn;
+        if (!previewMode) {
+            isBlackTurn = !isBlackTurn;
+        }
+
 
         clearAnalysis();
 
@@ -501,19 +556,37 @@ public class BoardView extends View {
         });
 
         animator.start();
-
         invalidate();
 
-        if (listener != null) {
+        if (!previewMode && listener != null) {
             listener.onTurnChanged(isBlackTurn);
         }
+    }
+
+    /*
+     * 手落子的手序号 = 当前历史里已用过的最大手序号 + 1。
+     *
+     * 用途：
+     *   - 纯手动对局：历史里没有编号 → 得 1,2,3…；
+     *   - 载入带编号的存档/棋谱后继续下：接着最大编号往下数。
+     * 手落子也带真实手序号，存 / 读 / 导出三处语义一致。
+     */
+    private int nextManualNumber() {
+        int max = 0;
+        for (int i = 0; i < moveHistory.size(); i++) {
+            int[] m = moveHistory.get(i);
+            if (m != null && m.length >= 4 && m[3] > max) {
+                max = m[3];
+            }
+        }
+        return max + 1;
     }
 
     public void passTurn() {
         truncateReviewIfNeeded();
 
         int color = isBlackTurn ? 1 : 2;
-        moveHistory.add(new int[]{-1, -1, color});
+        moveHistory.add(new int[]{-1, -1, color, nextManualNumber()});
 
         isBlackTurn = !isBlackTurn;
         clearAnalysis();
@@ -599,7 +672,12 @@ public class BoardView extends View {
         if (history != null) {
             for (int[] m : history) {
                 if (m == null || m.length < 3) continue;
-                moveHistory.add(new int[]{m[0], m[1], m[2]});
+                /*
+                 * 第 4 位是该子的手序号（> 0 才有；= 0 或没有第 4 位表示不带手序号）。
+                 * 这里整段搬运，存档 / 棋谱里的手序号原样保留。
+                 */
+                moveHistory.add(new int[]{
+                        m[0], m[1], m[2], m.length >= 4 ? m[3] : 0});
             }
         }
 
@@ -689,6 +767,59 @@ public class BoardView extends View {
         }
         rebuildBoard();
         invalidate();
+    }
+
+    /*
+     * ===== 识谱预览棋盘（纯 UI / 交互层）========================
+     * 以下方法只服务「识别结果先落在预览棋盘上，再人工校正」这一流程：
+     * 删除 / 补子都只改本地 moveHistory，不参与任何识别算法。
+     * ==========================================================
+     */
+
+    public void setPreviewMode(boolean preview) {
+        previewMode = preview;
+        invalidate();
+    }
+
+    public boolean isPreviewMode() {
+        return previewMode;
+    }
+
+    public void setEditMode(int mode) {
+        editMode = mode;
+        invalidate();
+    }
+
+    public int getEditMode() {
+        return editMode;
+    }
+
+    public void setPreviewColor(int color) {
+        previewColor = color;
+        invalidate();
+    }
+
+    public int getPreviewColor() {
+        return previewColor;
+    }
+
+    /* 删除 (col,row) 上的棋子；成功返回 true。 */
+    public boolean deleteStoneAt(int col, int row) {
+        if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE) {
+            return false;
+        }
+        for (int i = moveHistory.size() - 1; i >= 0; i--) {
+            int[] m = moveHistory.get(i);
+            if (m[0] == col && m[1] == row) {
+                moveHistory.remove(i);
+                rebuildBoard();
+                clearAnalysis();
+                invalidate();
+                if (listener != null) listener.onTurnChanged(isBlackTurn);
+                return true;
+            }
+        }
+        return false;
     }
 
     public interface OnTurnChangeListener {

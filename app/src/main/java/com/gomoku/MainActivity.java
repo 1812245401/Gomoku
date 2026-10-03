@@ -37,6 +37,11 @@ public class MainActivity extends Activity {
      */
     private static final int REQ_EXPORT_SGF = 1001;
     private static final int REQ_IMPORT_SGF = 1002;
+    /*
+     * REQ_RECOGNIZE：图片识谱（RecognizeActivity）返回识别结果后回调。
+     * 结果不走文件，直接在 Intent extra 里带回四元组 move 串。
+     */
+    private static final int REQ_RECOGNIZE = 1003;
 
     /*
      * 棋谱 MIME 类型。与 .sgf 附件一致，
@@ -67,6 +72,14 @@ public class MainActivity extends Activity {
     private boolean isAnalyzing = false;
     private boolean showNumbers = false;
     private boolean destroyed = false;
+
+    /*
+     * 当前棋盘是否来自「拍照识谱」。
+     * 识别谱禁止保存（btnSave / 保存对话框）、也就不会进入棋谱库，
+     * 从而从源头消除「识别谱导出 SGF 非法」的问题。
+     * 该标记随自动存档持久化，旋转屏幕 / 重启后仍保持禁止保存状态。
+     */
+    private boolean recognized = false;
 
     /*
      * 分别隔离：
@@ -161,6 +174,7 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 stopCurrentAnalysis();
                 boardView.clearBoard();
+                recognized = false;
                 saveAutoGame();
                 tvStatus.setText("棋盘已清空");
             }
@@ -276,6 +290,17 @@ public class MainActivity extends Activity {
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                /*
+                 * 拍照识谱得到的棋谱禁止保存（用户需求）：
+                 * 从源头阻断，识别谱不会进入棋谱库，也就不会出现导出问题。
+                 */
+                if (recognized) {
+                    Toast.makeText(
+                            MainActivity.this,
+                            "拍照识谱的棋谱禁止保存",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 showSaveDialog();
             }
         });
@@ -288,6 +313,7 @@ public class MainActivity extends Activity {
 
                 popup.getMenu().add(0, 1, 0, "我的棋谱");
                 popup.getMenu().add(0, 2, 0, "导入棋谱");
+                popup.getMenu().add(0, 4, 0, "图片识谱");
                 popup.getMenu().add(0, 3, 1, "关于");
 
                 popup.setOnMenuItemClickListener(
@@ -308,6 +334,19 @@ public class MainActivity extends Activity {
                                             new Intent(
                                                     MainActivity.this,
                                                     AboutActivity.class));
+                                    return true;
+                                }
+                                if (item.getItemId() == 4) {
+                                    /*
+                                     * 图片识谱：交给 RecognizeActivity。
+                                     * 识别逻辑由该 Activity 内的 WebView 调用
+                                     * assets/recognize/recognize.js（半步原样切片）完成。
+                                     */
+                                    startActivityForResult(
+                                            new Intent(
+                                                    MainActivity.this,
+                                                    RecognizeActivity.class),
+                                            REQ_RECOGNIZE);
                                     return true;
                                 }
 
@@ -695,7 +734,8 @@ public class MainActivity extends Activity {
                 boardView.getCurrentIndex(),
                 showNumbers,
                 currentEngine,
-                isRenju);
+                isRenju,
+                recognized);
     }
 
     private void restoreAutoGame() {
@@ -719,6 +759,7 @@ public class MainActivity extends Activity {
 
             isRenju = object.optBoolean("renju", false);
             showNumbers = object.optBoolean("showNumbers", false);
+            recognized = object.optBoolean("recognized", false);
 
             boardView.setShowNumbers(showNumbers);
             boardView.loadHistory(history);
@@ -734,6 +775,18 @@ public class MainActivity extends Activity {
     }
 
     private void showSaveDialog() {
+        /*
+         * 二次拦截（防御）：即使从其它入口调到保存对话框，
+         * 只要当前是识别谱也一律拒绝保存。
+         */
+        if (recognized) {
+            Toast.makeText(
+                    this,
+                    "拍照识谱的棋谱禁止保存",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         final EditText input = new EditText(this);
 
         input.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -824,6 +877,7 @@ public class MainActivity extends Activity {
 
                                         stopCurrentAnalysis();
                                         boardView.loadHistory(history);
+                                        recognized = false;
                                         saveAutoGame();
 
                                         tvStatus.setText(
@@ -1015,6 +1069,19 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        /*
+         * 图片识谱的结果不走文件 URI，必须在下面「data.getData() == null 直接返回」
+         * 的过滤之前先截走，否则永远收不到。
+         */
+        if (requestCode == REQ_RECOGNIZE) {
+            if (resultCode == RESULT_OK && data != null) {
+                applyRecognizedMoves(data);
+            } else {
+                tvStatus.setText("已取消图片识谱");
+            }
+            return;
+        }
+
         if (resultCode != RESULT_OK || data == null) {
             return;
         }
@@ -1107,11 +1174,81 @@ public class MainActivity extends Activity {
 
         stopCurrentAnalysis();
         boardView.loadHistory(history);
+        recognized = false;
         saveAutoGame();
-
         tvStatus.setText(
                 "导入成功 (" + history.size() + "手)");
     }
+
+    /*
+     * 图片识谱收口：四元组 move 串（col,row,color,number）-> 棋盘。
+     *
+     * 第 4 位 number 是该子的手序号（0 = 不带手序号）。
+     * 该值由 RecognizeActivity 原样带回，这里只做搬运，不在这里推算。
+     */
+    private void applyRecognizedMoves(Intent data) {
+        String raw = data.getStringExtra(RecognizeActivity.EXTRA_MOVES);
+        String summary = data.getStringExtra(RecognizeActivity.EXTRA_SUMMARY);
+        if (raw == null || raw.trim().isEmpty()) {
+            Toast.makeText(
+                    MainActivity.this,
+                    "没有可导入的识别结果",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        List<int[]> history = new ArrayList<int[]>();
+        String[] parts = raw.split(";");
+        for (int i = 0; i < parts.length; i++) {
+            String p = parts[i].trim();
+            if (p.isEmpty()) continue;
+            String[] t = p.split(",");
+            if (t.length < 3) continue;
+            try {
+                int col = Integer.parseInt(t[0].trim());
+                int row = Integer.parseInt(t[1].trim());
+                int color = Integer.parseInt(t[2].trim());
+                int number = t.length >= 4 ? Integer.parseInt(t[3].trim()) : 0;
+                history.add(new int[]{col, row, color, number});
+            } catch (NumberFormatException ignored) {
+                /* 单条坏数据跳过，不影响整体导入 */
+            }
+        }
+        if (history.isEmpty()) {
+            Toast.makeText(
+                    MainActivity.this,
+                    "识别结果为空",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        /*
+         * 识谱导入成功后一律把「编号:开」打开（纯 UI 接线）：
+         * 用户随后手落的子会从 1 起自动编号（BoardView.nextManualNumber），
+         * 开着编号才看得见。
+         */
+        if (!showNumbers) {
+            showNumbers = true;
+            boardView.setShowNumbers(true);
+            btnShowNumbers.setText("编号:开");
+        }
+
+        /*
+         * 打标：本局来自拍照识谱 —— 禁止保存。
+         * 标记随自动存档持久化，旋转 / 重启后仍保持禁止保存状态。
+         */
+        recognized = true;
+
+        stopCurrentAnalysis();
+        boardView.loadHistory(history);
+        saveAutoGame();
+        tvStatus.setText(
+                "识谱导入成功 (" + history.size() + "子)"
+                        + (summary != null && summary.length() > 0
+                        ? "\n" + summary
+                        : ""));
+    }
+
 
     private void showImportDialog() {
         final EditText input = new EditText(this);

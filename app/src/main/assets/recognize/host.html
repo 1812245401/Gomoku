@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>banbu-recognize-host</title>
+</head>
+<body>
+<p id="log">模块加载中…</p>
+<script type="module">
+/*
+ * 宿主胶水层（不是识别逻辑）。
+ * 识别全部逻辑来自 ./recognize.js —— 半步五子棋打谱 1.1.9 原样切片，零改动。
+ * 本文件只做三件事：
+ *   1) 把 Java 侧传来的 base64 图片还原成 Blob（recognize 的入参是 File/Blob）；
+ *   2) 把 Java 侧传来的手动框选区域（可选）解成 recognize 需要的 roi 选项；
+ *   3) 把 recognize 的返回值裁剪成可 JSON 化的字段（gridCanvas 是 DOM 节点，不能序列化）。
+ */
+import { recognize } from './recognize.js';
+
+function toBlob(b64, mime) {
+    const bin = atob(b64);
+    const len = bin.length;
+    const u8 = new Uint8Array(len);
+    for (let i = 0; i < len; i++) u8[i] = bin.charCodeAt(i);
+    return new Blob([u8], { type: mime || 'image/jpeg' });
+}
+
+window.__banbuRecognize = async function (b64, mime, size, skipMoveOrder, roiJson) {
+    const t0 = Date.now();
+    let payload;
+    try {
+        const blob = toBlob(b64, mime);
+        /*
+         * 手动框选的棋盘区域：{x,y,w,h}，0–1 归一化、相对图片本身。
+         * 由 Java 侧把框选矩形换算后以 JSON 字符串传进来；
+         * 空串 / 解析失败 / 无效矩形 = 不传 roi，走半步原本的自动定位。
+         */
+        let roi;
+        if (roiJson) {
+            try {
+                const p = JSON.parse(roiJson);
+                if (p && p.w > 0 && p.h > 0) {
+                    roi = { x: +p.x, y: +p.y, w: +p.w, h: +p.h };
+                }
+            } catch (ignored) { /* 解析失败就当作没框选 */ }
+        }
+        const r = await recognize(blob, size | 0, {
+            skipMoveOrder: !!skipMoveOrder,
+            roi: roi,
+            /* 单线程：不创建 Worker，避免 WebView 拦截域下的 Worker 兼容问题。
+             * 多核加速器 require 的 recognition-accelerator.js + recognition-worker.js 已一并放入 assets 备用。 */
+            parallel: false
+        });
+        payload = {
+            ok: true,
+            ms: Date.now() - t0,
+            boardSize: r.boardSize,
+            board: r.board,
+            numberedMoves: r.numberedMoves,
+            readMoveNumbers: r.readMoveNumbers,
+            confidence: r.confidence,
+            ignoredColoredMarkers: r.ignoredColoredMarkers,
+            note: r.note,
+            imageWidth: r.imageWidth,
+            imageHeight: r.imageHeight,
+            grid: r.grid
+        };
+    } catch (e) {
+        payload = { ok: false, ms: Date.now() - t0, error: String((e && e.message) || e) };
+    }
+    const json = JSON.stringify(payload);
+    if (window.BanbuBridge && window.BanbuBridge.onResult) {
+        window.BanbuBridge.onResult(json);
+    }
+    return json;
+};
+
+window.__banbuReady = true;
+document.getElementById('log').textContent = '识别模块已就绪(' + (Date.now() % 100000) + ')';
+if (window.BanbuBridge && window.BanbuBridge.onReady) {
+    window.BanbuBridge.onReady();
+}
+</script>
+</body>
+</html>

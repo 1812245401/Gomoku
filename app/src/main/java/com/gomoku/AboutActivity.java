@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,7 +23,7 @@ public class AboutActivity extends Activity {
 
     /* 联系与项目信息。改这里即可同步全页。 */
     private static final String APP_NAME = "Gomoku";
-    private static final String APP_VERSION = "1.1.0";
+    private static final String APP_VERSION = "1.2";
 
     private static final String GITHUB_URL =
             "https://github.com/1812245401/Gomoku";
@@ -76,17 +77,18 @@ public class AboutActivity extends Activity {
      * --------------------------------------------------------------- */
 
     private View buildContentView() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(0xFFFAFAF8);
+        /* 整页纵向：返回栏固定顶部，内容区可滚动 */
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setBackgroundColor(0xFFFAFAF8);
 
         int pad = dp(20);
-        root.setPadding(pad, dp(28), pad, dp(28));
 
-        /* 返回栏 */
+        /* 返回栏（固定在顶部，不随内容滚动，横屏也始终可见） */
         LinearLayout topBar = new LinearLayout(this);
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        topBar.setPadding(pad, dp(16), pad, dp(4));
 
         TextView btnBack = new TextView(this);
         btnBack.setText("← 返回");
@@ -101,7 +103,22 @@ public class AboutActivity extends Activity {
         });
 
         topBar.addView(btnBack);
-        root.addView(topBar);
+        page.addView(topBar);
+
+        /* 可滚动的内容区 */
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setVerticalScrollBarEnabled(true);
+        page.addView(scroll, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(0xFFFAFAF8);
+        root.setPadding(pad, dp(12), pad, dp(28));
+        scroll.addView(root, new ScrollView.LayoutParams(
+                ScrollView.LayoutParams.MATCH_PARENT,
+                ScrollView.LayoutParams.WRAP_CONTENT));
 
         /* 标题区 */
         TextView tvApp = new TextView(this);
@@ -180,7 +197,7 @@ public class AboutActivity extends Activity {
         tvCopy.setPadding(0, dp(24), 0, 0);
         root.addView(tvCopy);
 
-        return root;
+        return page;
     }
 
     /* ------------------------- 小组件构造 ------------------------- */

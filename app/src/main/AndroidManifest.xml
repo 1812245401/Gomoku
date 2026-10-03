@@ -23,6 +23,10 @@
             android:name=".AboutActivity"
             android:label="关于"
             android:exported="false" />
+        <activity
+            android:name=".RecognizeActivity"
+            android:label="图片识谱"
+            android:exported="false" />
 
     </application>
 </manifest>
