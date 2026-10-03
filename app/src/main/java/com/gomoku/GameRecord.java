@@ -33,7 +33,7 @@ public class GameRecord {
             /*
              * 四列：col,row,player,number
              * number 是「棋子上手序编号」：
-             *   > 0 = 有手序号；= 0 = 该子不带手序号（不绘制、导出也不带）。
+             *   > 0 = 有手序号；= 0 = 该子不带手序号（不绘制；导出 SGF 时不写 MN）。
              * 旧的三列数据仍可被 deserialize 读入（第 4 列按 0 处理）。
              */
             sb.append(m[0]).append(",").append(m[1]).append(",").append(m[2])
