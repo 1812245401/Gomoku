@@ -1,8 +1,6 @@
 package com.gomoku;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -100,27 +98,7 @@ public class MainActivity extends Activity {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        if (android.os.Build.VERSION.SDK_INT >= 21) {
-            getWindow().addFlags(
-                    android.view.WindowManager.LayoutParams
-                            .FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-
-            getWindow().setStatusBarColor(0xFFFAFAF8);
-            getWindow().setNavigationBarColor(0xFFF6F5F2);
-        }
-
-        int systemUi = View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-
-        if (android.os.Build.VERSION.SDK_INT >= 23) {
-            systemUi |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-        }
-
-        if (android.os.Build.VERSION.SDK_INT >= 26) {
-            systemUi |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        }
-
-        getWindow().getDecorView().setSystemUiVisibility(systemUi);
-
+        UiTheme.applySystemBars(this);
         setContentView(R.layout.activity_main);
 
         boardView = (BoardView) findViewById(R.id.boardView);
@@ -792,36 +770,33 @@ public class MainActivity extends Activity {
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         input.setHint("请输入棋谱名称");
 
-        new AlertDialog.Builder(this)
-                .setTitle("保存棋谱")
-                .setView(input)
-                .setPositiveButton(
-                        "保存",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(
-                                    DialogInterface dialog, int which) {
+        new UiDialog.Builder(this)
+                .title("保存棋谱")
+                .input(UiTheme.dialogInput(this, input))
+                .positive("保存", new UiDialog.OnActionClick() {
+                    @Override
+                    public void onClick() {
 
-                                String name =
-                                        input.getText().toString().trim();
+                        String name =
+                                input.getText().toString().trim();
 
-                                if (name.isEmpty()) {
-                                    name = "未命名棋谱";
-                                }
+                        if (name.isEmpty()) {
+                            name = "未命名棋谱";
+                        }
 
-                                GameRecord record = new GameRecord(
-                                        name,
-                                        boardView.getFullHistory());
+                        GameRecord record = new GameRecord(
+                                name,
+                                boardView.getFullHistory());
 
-                                recordManager.save(record);
+                        recordManager.save(record);
 
-                                Toast.makeText(
-                                        MainActivity.this,
-                                        "已保存: " + name,
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        })
-                .setNegativeButton("取消", null)
+                        Toast.makeText(
+                                MainActivity.this,
+                                "已保存: " + name,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .negative("取消", null)
                 .show();
     }
 
@@ -835,41 +810,41 @@ public class MainActivity extends Activity {
         }
 
         String[] items = new String[list.size()];
+        String[] subs = new String[list.size()];
 
         for (int i = 0; i < list.size(); i++) {
             GameRecord record = list.get(i);
 
-            items[i] = record.name + "\n"
-                    + record.getDateString()
+            items[i] = record.name;
+            subs[i] = record.getDateString()
                     + "  ·  " + record.moveCount + "手";
         }
 
-        new AlertDialog.Builder(this)
-                .setTitle("我的棋谱")
-                .setItems(
+        new UiDialog.Builder(this)
+                .title("我的棋谱")
+                .items(
                         items,
-                        new DialogInterface.OnClickListener() {
+                        subs,
+                        new UiDialog.OnItemClick() {
                             @Override
-                            public void onClick(
-                                    DialogInterface dialog, int which) {
-                                showRecordOptions(list.get(which));
+                            public void onClick(int index) {
+                                showRecordOptions(list.get(index));
                             }
                         })
-                .setNegativeButton("关闭", null)
+                .negative("关闭", null)
                 .show();
     }
 
     private void showRecordOptions(final GameRecord record) {
-        new AlertDialog.Builder(this)
-                .setTitle(record.name)
-                .setItems(
+        new UiDialog.Builder(this)
+                .title(record.name)
+                .items(
                         new String[]{"打开", "导出", "删除"},
-                        new DialogInterface.OnClickListener() {
+                        new UiDialog.OnItemClick() {
                             @Override
-                            public void onClick(
-                                    DialogInterface dialog, int which) {
+                            public void onClick(int index) {
 
-                                if (which == 0) {
+                                if (index == 0) {
                                     try {
                                         List<int[]> history =
                                                 GameRecord.deserialize(
@@ -889,7 +864,7 @@ public class MainActivity extends Activity {
                                                 "棋谱加载失败",
                                                 Toast.LENGTH_SHORT).show();
                                     }
-                                } else if (which == 1) {
+                                } else if (index == 1) {
                                     exportRecord(record);
                                 } else {
                                     recordManager.delete(record.id);
@@ -901,7 +876,8 @@ public class MainActivity extends Activity {
                                 }
                             }
                         })
-                .setNegativeButton("取消", null)
+                .dangerIndex(2)
+                .negative("取消", null)
                 .show();
     }
 
@@ -972,26 +948,25 @@ public class MainActivity extends Activity {
      * 原粘贴框能力保留，新增文件选择能力。
      */
     private void showImportMenu() {
-        new AlertDialog.Builder(this)
-                .setTitle("导入棋谱")
-                .setItems(
+        new UiDialog.Builder(this)
+                .title("导入棋谱")
+                .items(
                         new String[]{
                                 "从文件导入 (.sgf)",
                                 "粘贴文本导入"
                         },
-                        new DialogInterface.OnClickListener() {
+                        new UiDialog.OnItemClick() {
                             @Override
-                            public void onClick(
-                                    DialogInterface dialog, int which) {
+                            public void onClick(int index) {
 
-                                if (which == 0) {
+                                if (index == 0) {
                                     pickSgfFile();
                                 } else {
                                     showImportDialog();
                                 }
                             }
                         })
-                .setNegativeButton("取消", null)
+                .negative("取消", null)
                 .show();
     }
 
@@ -1189,14 +1164,22 @@ public class MainActivity extends Activity {
     private void applyRecognizedMoves(Intent data) {
         String raw = data.getStringExtra(RecognizeActivity.EXTRA_MOVES);
         String summary = data.getStringExtra(RecognizeActivity.EXTRA_SUMMARY);
-        if (raw == null || raw.trim().isEmpty()) {
+        if (raw == null) {
             Toast.makeText(
                     MainActivity.this,
                     "没有可导入的识别结果",
                     Toast.LENGTH_SHORT).show();
             return;
         }
-
+        /* Empty is intentional when the user deleted every preview stone. */
+        if (raw.trim().isEmpty()) {
+            stopCurrentAnalysis();
+            boardView.clearBoard();
+            recognized = false;
+            saveAutoGame();
+            tvStatus.setText("导入成功 (0手)");
+            return;
+        }
         List<int[]> history = new ArrayList<int[]>();
         String[] parts = raw.split(";");
         for (int i = 0; i < parts.length; i++) {
@@ -1260,49 +1243,36 @@ public class MainActivity extends Activity {
         input.setHint("请粘贴 SGF 棋谱内容（(;GM[1]FF[4]...）");
         input.setMinLines(6);
 
-        new AlertDialog.Builder(this)
-                .setTitle("导入棋谱")
-                .setView(input)
-                .setPositiveButton(
-                        "导入",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(
-                                    DialogInterface dialog, int which) {
+        new UiDialog.Builder(this)
+                .title("导入棋谱")
+                .input(UiTheme.dialogInput(this, input))
+                .positive("导入", new UiDialog.OnActionClick() {
+                    @Override
+                    public void onClick() {
 
-                                String text =
-                                        input.getText().toString().trim();
+                        String text =
+                                input.getText().toString().trim();
 
-                                applyImportedSgf(text);
-                            }
-                        })
-                .setNegativeButton("取消", null)
+                        applyImportedSgf(text);
+                    }
+                })
+                .negative("取消", null)
                 .show();
     }
 
     private void updateButtons() {
-        /*
-         * 按钮表现只取决于用户当前选择，
-         * 不取决于引擎是否已经加载完成。
-         *
-         * 保持原项目的约定：当前选中的按钮禁用。
-         */
-        btnEngineKataGo.setEnabled(
-                currentEngine != EngineManager.ENGINE_KATAGO);
-
-        btnEngineRapfi.setEnabled(
-                currentEngine != EngineManager.ENGINE_RAPFI);
-
+        boolean kataSelected = currentEngine == EngineManager.ENGINE_KATAGO;
+        boolean rapfiSelected = currentEngine == EngineManager.ENGINE_RAPFI;
+        btnEngineKataGo.setSelected(kataSelected);
+        btnEngineRapfi.setSelected(rapfiSelected);
+        btnEngineKataGo.setEnabled(!kataSelected);
+        btnEngineRapfi.setEnabled(!rapfiSelected);
+        btnRenju.setSelected(isRenju);
+        btnFreestyle.setSelected(!isRenju);
         btnRenju.setEnabled(!isRenju);
         btnFreestyle.setEnabled(isRenju);
-
-        /*
-         * 加载状态通过“开始分析”按钮和状态文字体现，
-         * 不再通过引擎选择按钮变色体现。
-         */
         btnStart.setEnabled(engineReady);
     }
-
     private static final class Candidate {
         final int col;
         final int row;

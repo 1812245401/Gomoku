@@ -203,7 +203,19 @@ public class EngineManager {
                                             + rules.text);
                         }
                     } else {
+                        /*
+                         * Rapfi 在 thinking 期间会静默丢弃 INFO；先等上一轮
+                         * BOARD 结束，再同步规则并用 RESTART 的 OK 作屏障。
+                         */
+                        if (!c.rapfiDone.await(
+                                30, TimeUnit.SECONDS)) {
+                            throw new Exception(
+                                    "Rapfi 上一轮分析未结束，请重启引擎");
+                        }
+                        if (!isCurrentConnection(c)) return;
                         c.write("INFO RULE " + (target ? "2" : "0"));
+                        c.writeRapfiAndWaitOk(
+                                "RESTART", COMMAND_TIMEOUT_MS);
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "changeRule", e);
@@ -332,8 +344,6 @@ public class EngineManager {
                         }
                     } else {
                         c.write("START 15");
-                        c.write("INFO RULE " + (renju ? "2" : "0"));
-                        c.write("INFO TIMEOUT_TURN 8000");
 
                         if (!c.rapfiReady.await(
                                 15, TimeUnit.SECONDS)
@@ -341,6 +351,11 @@ public class EngineManager {
                                 || c.closed) {
                             throw new Exception("Rapfi 启动失败或超时");
                         }
+
+                        c.write("INFO RULE " + (renju ? "2" : "0"));
+                        c.write("INFO TIMEOUT_TURN 8000");
+                        c.writeRapfiAndWaitOk(
+                                "RESTART", START_TIMEOUT_MS);
                     }
 
                     if (!isCurrentConnection(c)) {
@@ -476,12 +491,24 @@ public class EngineManager {
                         if (!isCurrentRequest(c, requestId)) return;
 
                         c.write("INFO RULE " + (isRenju ? "2" : "0"));
+                        c.writeRapfiAndWaitOk(
+                                "RESTART", COMMAND_TIMEOUT_MS);
+                        if (!isCurrentRequest(c, requestId)) return;
+
+                        /*
+                         * Rapfi 用 BOARD 中第一颗非 WALL 子判断 SELF 的颜色。
+                         * 识谱结果可能从白子开始；这里只调整送给 Rapfi 的
+                         * 协议序列，不改识别结果、预览或应用内棋谱顺序。
+                         */
+                        List<int[]> rapfiHistory =
+                                normalizeRapfiHistory(snapshot);
+
                         c.rapfiDone = new CountDownLatch(1);
                         c.outputAnalysisId = requestId;
 
                         c.write("BOARD");
 
-                        for (int[] move : snapshot) {
+                        for (int[] move : rapfiHistory) {
                             if (move[0] < 0) continue;
 
                             validateStone(move);
@@ -630,6 +657,47 @@ public class EngineManager {
         }
     }
 
+    private static List<int[]> normalizeRapfiHistory(
+            List<int[]> history) {
+        if (history == null || history.isEmpty()) {
+            return history;
+        }
+
+        int firstStone = -1;
+        int firstBlack = -1;
+
+        for (int i = 0; i < history.size(); i++) {
+            int[] move = history.get(i);
+            if (move == null || move.length < 3
+                    || move[0] < 0) {
+                continue;
+            }
+            if (move[2] != 1 && move[2] != 2) {
+                continue;
+            }
+            if (firstStone < 0) {
+                firstStone = i;
+            }
+            if (firstBlack < 0 && move[2] == 1) {
+                firstBlack = i;
+            }
+        }
+
+        if (firstStone < 0 || firstBlack < 0
+                || history.get(firstStone)[2] == 1) {
+            return history;
+        }
+
+        List<int[]> normalized = new ArrayList<>(history.size());
+        normalized.add(history.get(firstBlack));
+        for (int i = 0; i < history.size(); i++) {
+            if (i != firstBlack) {
+                normalized.add(history.get(i));
+            }
+        }
+        return normalized;
+    }
+
     private static String toGtpCoordinate(int col, int row) {
         char letter = (char) ('A' + col);
 
@@ -681,6 +749,7 @@ public class EngineManager {
         final CountDownLatch rapfiReady = new CountDownLatch(1);
 
         volatile CountDownLatch rapfiDone = new CountDownLatch(0);
+        volatile CountDownLatch rapfiAck = new CountDownLatch(0);
         volatile boolean rapfiOk;
         volatile boolean closed;
 
@@ -757,6 +826,25 @@ public class EngineManager {
             writer.flush();
         }
 
+        void writeRapfiAndWaitOk(String command, long timeout)
+                throws Exception {
+            CountDownLatch ack = new CountDownLatch(1);
+            rapfiAck = ack;
+            try {
+                write(command);
+                if (!ack.await(timeout, TimeUnit.MILLISECONDS)) {
+                    throw new Exception("Rapfi 命令超时：" + command);
+                }
+                if (closed) {
+                    throw new Exception("引擎已关闭");
+                }
+            } finally {
+                if (rapfiAck == ack) {
+                    rapfiAck = new CountDownLatch(0);
+                }
+            }
+        }
+
         GtpResponse command(String command, long timeout)
                 throws Exception {
 
@@ -814,6 +902,7 @@ public class EngineManager {
                         if ("OK".equalsIgnoreCase(line)) {
                             rapfiOk = true;
                             rapfiReady.countDown();
+                            rapfiAck.countDown();
                         }
 
                         long requestId = outputAnalysisId;
@@ -916,6 +1005,7 @@ public class EngineManager {
                 failPending("引擎输出流已关闭");
                 rapfiReady.countDown();
                 rapfiDone.countDown();
+                rapfiAck.countDown();
 
                 closeQuietly(reader);
 
@@ -948,6 +1038,7 @@ public class EngineManager {
             failPending("引擎已关闭");
             rapfiReady.countDown();
             rapfiDone.countDown();
+            rapfiAck.countDown();
 
             Thread closer = new Thread(new Runnable() {
                 @Override

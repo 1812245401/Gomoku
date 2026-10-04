@@ -5,12 +5,14 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.animation.DecelerateInterpolator;
 
 import java.util.ArrayList;
@@ -44,6 +46,16 @@ public class BoardView extends View {
     private Paint moveNumberPaint;
     private Paint shadowPaint;
     private Paint lastMovePaint;
+    /* Cache immutable gradients; update only their local transform per stone. */
+    private LinearGradient boardShader;
+    private RadialGradient blackStoneShader;
+    private RadialGradient whiteStoneShader;
+    private final Matrix blackShaderMatrix = new Matrix();
+    private final Matrix whiteShaderMatrix = new Matrix();
+    private float touchDownX;
+    private float touchDownY;
+    private boolean touchMoved;
+    private final float touchSlop;
 
     private final int[][] board = new int[BOARD_SIZE][BOARD_SIZE];
     private final List<int[]> moveHistory = new ArrayList<>();
@@ -78,6 +90,7 @@ public class BoardView extends View {
     public BoardView(Context context, AttributeSet attrs) {
         super(context, attrs);
         initPaints();
+        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         setClickable(true);
     }
 
@@ -103,6 +116,16 @@ public class BoardView extends View {
 
         whitePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         whitePaint.setStyle(Paint.Style.FILL);
+        blackStoneShader = new RadialGradient(
+                -0.34f, -0.38f, 1.12f,
+                new int[]{Color.rgb(92, 92, 92), Color.rgb(32, 32, 34), Color.rgb(8, 8, 9)},
+                new float[]{0f, 0.35f, 1f}, Shader.TileMode.CLAMP);
+        whiteStoneShader = new RadialGradient(
+                -0.35f, -0.40f, 1.15f,
+                new int[]{Color.WHITE, Color.rgb(241, 241, 241), Color.rgb(205, 205, 205)},
+                new float[]{0f, 0.48f, 1f}, Shader.TileMode.CLAMP);
+        blackPaint.setShader(blackStoneShader);
+        whitePaint.setShader(whiteStoneShader);
 
         whiteStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         whiteStrokePaint.setStyle(Paint.Style.STROKE);
@@ -175,6 +198,9 @@ public class BoardView extends View {
 
         padding = w * 0.085f;
         cellSize = (w - padding * 2f) / (BOARD_SIZE - 1);
+        boardShader = new LinearGradient(
+                0, 0, w, h, Color.rgb(238, 207, 161), Color.rgb(224, 181, 125),
+                Shader.TileMode.CLAMP);
     }
 
     @Override
@@ -186,13 +212,8 @@ public class BoardView extends View {
         float right = padding + (BOARD_SIZE - 1) * cellSize;
         float bottom = top + (BOARD_SIZE - 1) * cellSize;
 
-        boardPaint.setShader(new LinearGradient(
-                0, 0, getWidth(), getHeight(),
-                Color.rgb(238, 207, 161),
-                Color.rgb(224, 181, 125),
-                Shader.TileMode.CLAMP));
+        boardPaint.setShader(boardShader);
         canvas.drawRect(0, 0, getWidth(), getHeight(), boardPaint);
-        boardPaint.setShader(null);
 
         canvas.drawRect(left - cellSize * 0.18f, top - cellSize * 0.18f,
                 right + cellSize * 0.18f, bottom + cellSize * 0.18f, borderPaint);
@@ -281,41 +302,19 @@ public class BoardView extends View {
     private void drawStone(Canvas canvas, float cx, float cy, float radius, boolean black) {
         canvas.drawCircle(cx + radius * 0.08f, cy + radius * 0.10f,
                 radius * 1.01f, shadowPaint);
-
         if (black) {
-            blackPaint.setShader(new RadialGradient(
-                    cx - radius * 0.34f,
-                    cy - radius * 0.38f,
-                    radius * 1.12f,
-                    new int[]{
-                            Color.rgb(92, 92, 92),
-                            Color.rgb(32, 32, 34),
-                            Color.rgb(8, 8, 9)
-                    },
-                    new float[]{0f, 0.35f, 1f},
-                    Shader.TileMode.CLAMP));
-
+            blackShaderMatrix.setScale(radius, radius);
+            blackShaderMatrix.postTranslate(cx, cy);
+            blackStoneShader.setLocalMatrix(blackShaderMatrix);
             canvas.drawCircle(cx, cy, radius, blackPaint);
-            blackPaint.setShader(null);
         } else {
-            whitePaint.setShader(new RadialGradient(
-                    cx - radius * 0.35f,
-                    cy - radius * 0.40f,
-                    radius * 1.15f,
-                    new int[]{
-                            Color.WHITE,
-                            Color.rgb(241, 241, 241),
-                            Color.rgb(205, 205, 205)
-                    },
-                    new float[]{0f, 0.48f, 1f},
-                    Shader.TileMode.CLAMP));
-
+            whiteShaderMatrix.setScale(radius, radius);
+            whiteShaderMatrix.postTranslate(cx, cy);
+            whiteStoneShader.setLocalMatrix(whiteShaderMatrix);
             canvas.drawCircle(cx, cy, radius, whitePaint);
-            whitePaint.setShader(null);
             canvas.drawCircle(cx, cy, radius, whiteStrokePaint);
         }
     }
-
     private void drawAnalysis(Canvas canvas) {
         if (!analyzing) return;
 
@@ -459,60 +458,48 @@ public class BoardView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() != MotionEvent.ACTION_UP) {
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            touchDownX = event.getX();
+            touchDownY = event.getY();
+            touchMoved = false;
             return true;
         }
-
+        if (action == MotionEvent.ACTION_MOVE) {
+            if (Math.hypot(event.getX() - touchDownX, event.getY() - touchDownY)
+                    > touchSlop) {
+                touchMoved = true;
+            }
+            return true;
+        }
+        if (action != MotionEvent.ACTION_UP) return true;
+        if (touchMoved) {
+            touchMoved = false;
+            return true;
+        }
         performClick();
-
         float x = event.getX();
         float y = event.getY();
-
-        if (cellSize <= 0f) {
-            return true;
-        }
-
+        if (cellSize <= 0f) return true;
         float boardX = (x - padding) / cellSize;
         float boardY = (y - padding) / cellSize;
         int col = Math.round(boardX);
         int row = Math.round(boardY);
-
-        // Accept a comfortable touch area around each intersection, but do not
-        // turn taps on the surrounding margin into stones on the edge.
         if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE
                 || Math.abs(boardX - col) > 0.62f
-                || Math.abs(boardY - row) > 0.62f) {
-            return true;
-        }
-        /* 预览棋盘：按 editMode 分派，纯 UI 交互，不改识别逻辑 */
+                || Math.abs(boardY - row) > 0.62f) return true;
         if (previewMode) {
-            if (editMode == EDIT_DELETE) {
-                deleteStoneAt(col, row);
-            } else {
-                if (board[col][row] == 0) {
-                    placeStone(col, row);
-                }
-            }
+            if (editMode == EDIT_DELETE) deleteStoneAt(col, row);
+            else if (board[col][row] == 0) placeStone(col, row);
             return true;
         }
-
-        if (currentIndex != -1) {
-            int keep = getDisplayCount();
-            while (moveHistory.size() > keep) {
-                moveHistory.remove(moveHistory.size() - 1);
-            }
-            currentIndex = -1;
-            rebuildBoard();
-        }
-
+        /* Tapping an existing stone while reviewing must not delete the future. */
         if (board[col][row] == 0) {
+            truncateReviewIfNeeded();
             placeStone(col, row);
         }
-
         return true;
     }
-
-
     @Override
     public boolean performClick() {
         super.performClick();

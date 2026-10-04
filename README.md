@@ -56,7 +56,7 @@ Gomoku/
 
 ## 版本
 
-当前版本 **v1.2**（versionCode 3）。详见 [CHANGELOG.md](CHANGELOG.md)。
+当前版本 **v1.3**（versionCode 4）。详见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可
 

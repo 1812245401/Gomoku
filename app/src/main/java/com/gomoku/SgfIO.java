@@ -68,7 +68,7 @@ public final class SgfIO {
          * 兼容按行解析的简易解析器；RU 值使用小写（renju/freestyle），
          * 大小写敏感的打谱软件据此识别规则。 */
         sb.append("(\n  ");
-        sb.append(";GM[1]FF[4]CA[UTF-8]AP[Gomoku:1.2]");
+        sb.append(";GM[1]FF[4]CA[UTF-8]AP[Gomoku:1.3]");
         sb.append("SZ[").append(BOARD_SIZE).append("]");
 
         sb.append("RU[").append(renju ? "renju" : "freestyle").append("]");

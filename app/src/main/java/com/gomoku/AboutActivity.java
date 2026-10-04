@@ -23,7 +23,7 @@ public class AboutActivity extends Activity {
 
     /* 联系与项目信息。改这里即可同步全页。 */
     private static final String APP_NAME = "Gomoku";
-    private static final String APP_VERSION = "1.2";
+    private static final String APP_VERSION = "1.3";
 
     private static final String GITHUB_URL =
             "https://github.com/1812245401/Gomoku";
@@ -42,9 +42,9 @@ public class AboutActivity extends Activity {
     private static final String PRIVACY_URL =
             GITHUB_URL + "/blob/main/PRIVACY.md";
 
-    private static final int COLOR_TITLE = 0xFF2B2B2B;
-    private static final int COLOR_TEXT = 0xFF555555;
-    private static final int COLOR_ACCENT = 0xFF2B6CB0;
+    private int COLOR_TITLE;
+    private int COLOR_TEXT;
+    private int COLOR_ACCENT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,22 +52,10 @@ public class AboutActivity extends Activity {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        if (Build.VERSION.SDK_INT >= 21) {
-            getWindow().setStatusBarColor(0xFFFAFAF8);
-            getWindow().setNavigationBarColor(0xFFF6F5F2);
-        }
-
-        int systemUi = View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-
-        if (Build.VERSION.SDK_INT >= 23) {
-            systemUi |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-        }
-
-        if (Build.VERSION.SDK_INT >= 26) {
-            systemUi |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        }
-
-        getWindow().getDecorView().setSystemUiVisibility(systemUi);
+        COLOR_TITLE = getResources().getColor(R.color.ink);
+        COLOR_TEXT = getResources().getColor(R.color.muted);
+        COLOR_ACCENT = getResources().getColor(R.color.accent);
+        UiTheme.applySystemBars(this);
 
         setContentView(buildContentView());
     }
@@ -80,7 +68,7 @@ public class AboutActivity extends Activity {
         /* 整页纵向：返回栏固定顶部，内容区可滚动 */
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
-        page.setBackgroundColor(0xFFFAFAF8);
+        page.setBackgroundColor(getResources().getColor(R.color.canvas));
 
         int pad = dp(20);
 
@@ -88,13 +76,18 @@ public class AboutActivity extends Activity {
         LinearLayout topBar = new LinearLayout(this);
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        topBar.setPadding(pad, dp(16), pad, dp(4));
+        topBar.setPadding(pad, dp(12), pad, dp(4));
 
         TextView btnBack = new TextView(this);
         btnBack.setText("← 返回");
         btnBack.setTextSize(16f);
         btnBack.setTextColor(COLOR_ACCENT);
-        btnBack.setPadding(0, dp(4), dp(12), dp(4));
+        btnBack.setPadding(dp(14), 0, dp(14), 0);
+        btnBack.setGravity(android.view.Gravity.CENTER);
+        btnBack.setMinHeight(dp(48));
+        btnBack.setBackgroundResource(R.drawable.bg_button_secondary);
+        btnBack.setFocusable(true);
+        btnBack.setContentDescription("返回棋盘");
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -108,13 +101,13 @@ public class AboutActivity extends Activity {
         /* 可滚动的内容区 */
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
-        scroll.setVerticalScrollBarEnabled(true);
+        scroll.setVerticalScrollBarEnabled(false);
         page.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(0xFFFAFAF8);
+        root.setBackgroundColor(getResources().getColor(R.color.canvas));
         root.setPadding(pad, dp(12), pad, dp(28));
         scroll.addView(root, new ScrollView.LayoutParams(
                 ScrollView.LayoutParams.MATCH_PARENT,
@@ -123,7 +116,8 @@ public class AboutActivity extends Activity {
         /* 标题区 */
         TextView tvApp = new TextView(this);
         tvApp.setText(APP_NAME);
-        tvApp.setTextSize(28f);
+        tvApp.setTextSize(34f);
+        tvApp.setTypeface(android.graphics.Typeface.create("sans-serif-medium", 0));
         tvApp.setTextColor(COLOR_TITLE);
         tvApp.setPadding(0, dp(12), 0, dp(2));
         root.addView(tvApp);
@@ -195,6 +189,7 @@ public class AboutActivity extends Activity {
         tvCopy.setTextSize(12f);
         tvCopy.setTextColor(COLOR_TEXT);
         tvCopy.setPadding(0, dp(24), 0, 0);
+        tvCopy.setLineSpacing(dp(4), 1f);
         root.addView(tvCopy);
 
         return page;
@@ -206,8 +201,9 @@ public class AboutActivity extends Activity {
         TextView tv = new TextView(this);
         tv.setText(text);
         tv.setTextSize(13f);
-        tv.setTextColor(COLOR_TEXT);
-        tv.setPadding(0, dp(20), 0, dp(8));
+        tv.setTextColor(COLOR_ACCENT);
+        tv.setTypeface(android.graphics.Typeface.create("sans-serif-medium", 0));
+        tv.setPadding(0, dp(24), 0, dp(10));
         return tv;
     }
 
@@ -216,16 +212,21 @@ public class AboutActivity extends Activity {
         tv.setText(key + "： " + value);
         tv.setTextSize(14f);
         tv.setTextColor(COLOR_TITLE);
-        tv.setPadding(0, dp(3), 0, dp(3));
+        styleCard(tv, false);
         return tv;
     }
 
     private TextView clickable(String title, String sub, final Runnable action) {
         TextView tv = new TextView(this);
-        tv.setText(title + "\n" + sub);
+        android.text.SpannableString label = new android.text.SpannableString(title + "  ↗\n" + sub);
+        int split = label.toString().indexOf('\n');
+        label.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, split, 0);
+        label.setSpan(new android.text.style.ForegroundColorSpan(COLOR_TEXT), split + 1, label.length(), 0);
+        label.setSpan(new android.text.style.RelativeSizeSpan(0.88f), split + 1, label.length(), 0);
+        tv.setText(label);
         tv.setTextSize(14f);
         tv.setTextColor(COLOR_ACCENT);
-        tv.setPadding(0, dp(10), 0, dp(10));
+        styleCard(tv, true);
 
         tv.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -235,6 +236,17 @@ public class AboutActivity extends Activity {
         });
 
         return tv;
+    }
+
+    private void styleCard(TextView tv, boolean clickable) {
+        tv.setPadding(dp(16), dp(15), dp(16), dp(15));
+        tv.setMinHeight(dp(52));
+        tv.setLineSpacing(dp(5), 1f);
+        tv.setBackgroundResource(clickable ? R.drawable.bg_button_secondary : R.drawable.bg_board_card);
+        tv.setFocusable(clickable);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.bottomMargin = dp(8);
+        tv.setLayoutParams(params);
     }
 
     /* --------------------------- 跳转 --------------------------- */

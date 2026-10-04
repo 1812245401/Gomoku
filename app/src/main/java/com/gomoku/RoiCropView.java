@@ -69,14 +69,14 @@ public class RoiCropView extends View {
         dimPaint.setColor(Color.argb(150, 0, 0, 0));
 
         rectStrokePaint.setStyle(Paint.Style.STROKE);
-        rectStrokePaint.setStrokeWidth(4f);
-        rectStrokePaint.setColor(Color.rgb(255, 214, 90));
+        rectStrokePaint.setStrokeWidth(2f * d);
+        rectStrokePaint.setColor(Color.rgb(164, 215, 186));
 
         rectFillPaint.setStyle(Paint.Style.FILL);
-        rectFillPaint.setColor(Color.argb(48, 255, 214, 90));
+        rectFillPaint.setColor(Color.argb(35, 164, 215, 186));
 
         hintPaint.setColor(Color.WHITE);
-        hintPaint.setTextSize(36f);
+        hintPaint.setTextSize(14f * d);
         hintPaint.setTextAlign(Paint.Align.CENTER);
         hintPaint.setFakeBoldText(true);
 
@@ -84,8 +84,8 @@ public class RoiCropView extends View {
         handleFillPaint.setColor(Color.WHITE);
 
         handleStrokePaint.setStyle(Paint.Style.STROKE);
-        handleStrokePaint.setStrokeWidth(3f);
-        handleStrokePaint.setColor(Color.rgb(255, 214, 90));
+        handleStrokePaint.setStrokeWidth(1.5f * d);
+        handleStrokePaint.setColor(Color.rgb(164, 215, 186));
 
         setClickable(true);
     }

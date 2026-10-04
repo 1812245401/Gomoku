@@ -82,6 +82,8 @@ public class RecognizeActivity extends Activity {
     private String pendingBase64;
     private String pendingMime = "image/jpeg";
     private boolean pageReady = false;
+    /* true after at least one recognition result was loaded into the preview. */
+    private boolean hasPreviewResult = false;
 
     /* 可显示的位图（已矫正/已缩放），供框选控件绘制；与送给识别的 JPEG 同源 */
     private Bitmap previewBitmap;
@@ -197,11 +199,10 @@ public class RecognizeActivity extends Activity {
         webView.setWebViewClient(new BanbuAssets(this) {
             @Override
             public void onPageFinished(WebView view, String url) {
-                pageReady = true;
-                if (pendingBase64 == null) {
-                    tvStatus.setText("识别模块已就绪，请选择棋局照片");
-                } else {
-                    tvStatus.setText("识别模块已就绪，点「开始识别」");
+                /* HTML finished is not the same as the ES module being ready.
+                 * pageReady is set only by BanbuBridge.onReady(). */
+                if (!pageReady) {
+                    tvStatus.setText("页面已加载，正在初始化识别模块…");
                 }
             }
         });
@@ -221,6 +222,12 @@ public class RecognizeActivity extends Activity {
             runOnUiThread(new Runnable() {
                 public void run() {
                     pageReady = true;
+                    btnRun.setEnabled(pendingBase64 != null);
+                    if (pendingBase64 == null) {
+                        tvStatus.setText("识别模块已就绪，请选择棋局照片");
+                    } else {
+                        tvStatus.setText("识别模块已就绪，点「开始识别」");
+                    }
                 }
             });
         }
@@ -264,8 +271,9 @@ public class RecognizeActivity extends Activity {
         }
         Uri uri = data.getData();
         if (prepareImage(uri)) {
-            btnRun.setEnabled(true);
+            btnRun.setEnabled(pageReady);
             btnImport.setEnabled(false);
+            hasPreviewResult = false;
             lastMoves.clear();
             lastSummary = "";
             tvStatus.setText("已选择照片，请先框选棋盘区域");
@@ -440,6 +448,7 @@ public class RecognizeActivity extends Activity {
         final boolean skipMoveOrder = true;
         btnRun.setEnabled(false);
         btnImport.setEnabled(false);
+        hasPreviewResult = false;
         lastMoves.clear();
         lastSummary = "";
         tvStatus.setText("识别中…");
@@ -528,6 +537,7 @@ public class RecognizeActivity extends Activity {
 
             /* 2) 局面先落到预览棋盘：按识别到的原顺序落子 */
             lastMoves.clear();
+            hasPreviewResult = true;
             for (int[] s : stones) {
                 lastMoves.add(new int[]{s[0], s[1], s[2], 0});
             }
@@ -603,14 +613,15 @@ public class RecognizeActivity extends Activity {
 
     private void finishWithMoves() {
         /* 以预览棋盘的当前历史为准：用户在上面删子 / 补子后的结果 */
-        List<int[]> out = (boardPreview != null)
-                ? boardPreview.getMoveHistory()
-                : new ArrayList<int[]>();
-        if (out.isEmpty()) out = lastMoves;
-        if (out.isEmpty()) {
+        if (!hasPreviewResult) {
             Toast.makeText(this, "还没有可导入的结果", Toast.LENGTH_SHORT).show();
             return;
         }
+        /* Once a result exists, an empty history is meaningful: the user may
+         * have deliberately deleted every stone. Never restore lastMoves here. */
+        List<int[]> out = (boardPreview != null)
+                ? boardPreview.getMoveHistory()
+                : new ArrayList<int[]>();
         StringBuilder sb = new StringBuilder();
         for (int[] m : out) {
             if (sb.length() > 0) sb.append(';');
