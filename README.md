@@ -8,14 +8,7 @@ Android 五子棋（连珠）分析与打谱应用。AI 引擎全本地运行，
 - **🧠 智子同款 24b 权重** — 内置与「智子」平台同款的 KataGo **24b** 神经网络（INT8 量化），配合 Rapfi 算杀引擎，全程**纯 CPU 离线推理**，无需 GPU、无需网络。
 
 ## 截图
-
-| KataGo 局面分析 | Rapfi 最佳点 | 导入棋谱 |
-|:---:|:---:|:---:|
-| ![KataGo 局面分析](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/01_katago.jpg) | ![Rapfi 最佳点](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/02_rapfi.jpg) | ![导入棋谱](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/03_import.jpg) |
-
-| 保存棋谱 | 横屏棋盘 | |
-|:---:|:---:|:---:|
-| ![保存棋谱](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/04_save_record.jpg) | ![横屏棋盘](https://raw.githubusercontent.com/1812245401/Gomoku/main/screenshots/05_landscape.jpg) | |
+![](screenshots/01_katago.jpg)
 
 ## 功能
 
