@@ -47,6 +47,9 @@ Gomoku/
 
 注：`.gitignore` 已忽略 `local.properties`，请自行配置 SDK 路径。
 
+## 安装与更新
+> ⚠️ **从旧版本更新时，请先卸载旧版（或清除应用数据）再安装新 APK。** 内置 AI 引擎仅在首次启动时写入应用内部存储，直接覆盖安装不会刷新引擎文件，可能导致修复不生效。
+
 ## 版本
 
 当前版本 **v1.3**（versionCode 4）。详见 [CHANGELOG.md](CHANGELOG.md)。
