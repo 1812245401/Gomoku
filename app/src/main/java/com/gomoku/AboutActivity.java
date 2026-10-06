@@ -23,7 +23,7 @@ public class AboutActivity extends Activity {
 
     /* 联系与项目信息。改这里即可同步全页。 */
     private static final String APP_NAME = "Gomoku";
-    private static final String APP_VERSION = "1.3";
+    private static final String APP_VERSION = "1.4";
 
     private static final String GITHUB_URL =
             "https://github.com/1812245401/Gomoku";

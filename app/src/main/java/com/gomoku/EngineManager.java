@@ -94,8 +94,7 @@ public class EngineManager {
                     "config.toml",
                     "mix9svqfreestyle_bsmix.bin.lz4",
                     "mix9svqrenju_bs15_black.bin.lz4",
-                    "mix9svqrenju_bs15_white.bin.lz4",
-                    "model210901.bin"
+                    "mix9svqrenju_bs15_white.bin.lz4"
             };
 
             for (String name : otherFiles) {

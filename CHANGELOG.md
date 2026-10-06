@@ -4,6 +4,18 @@
 
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.4] - 2026-10-06
+
+### 新增
+- **应用图标**：新增方形图标 `ic_launcher` 与圆形图标 `ic_launcher_round`（xxhdpi / xxxhdpi 两套密度），并在清单中声明 `android:icon` / `android:roundIcon`。
+
+### 优化
+- **Rapfi 引擎更新**：更换 `pbrain-rapfi` 原生引擎为新版构建，并同步更新 `config.toml`。
+- 移除已废弃的旧模型文件 `model210901.bin`，并清理其在 `EngineManager` 与 `config.toml` 中的引用。
+
+### 变更
+- 版本号升至 1.4（versionCode 5）。
+
 ## [1.3] - 2026-10-05
 
 ### 新增
@@ -44,6 +56,7 @@
 - 标准 SGF (FF[4]) 棋谱读写。
 - 对局自动保存与记录管理。
 
+[1.4]: https://github.com/1812245401/Gomoku/releases/tag/v1.4
 [1.3]: https://github.com/1812245401/Gomoku/releases/tag/v1.3
 [1.2]: https://github.com/1812245401/Gomoku/releases/tag/v1.2
 [1.1.0]: https://github.com/1812245401/Gomoku/releases/tag/v1.1.0
